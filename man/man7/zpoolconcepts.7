@@ -162,9 +162,6 @@ Defaults to
 The expected number of children.
 Useful as a cross-check when listing a large number of devices.
 An error is returned when the provided number of children differs.
-.It Ar spares
-The number of distributed hot spares.
-Defaults to zero.
 .It Ar width
 You can have several groups of children in the same row, in which case
 width would be multiple of children.
@@ -175,6 +172,12 @@ will be operational.
 In case of draid2, two enclosures can fail at the same time, in case of
 draid3 - three enclosures, for each group it will look as if only one,
 two or three disks are failed.
+.It Ar spares
+The number of distributed hot spares.
+If failure groups are configured (width > children), it should be
+multiple of the number of such groups so that each group have the same
+number of spares.
+Defaults to zero.
 .El
 .It Sy spare
 A pseudo-vdev which keeps track of available hot spares for a pool.
