@@ -47,7 +47,7 @@ function cleanup
 	rmdir $TESTDIR
 }
 
-log_assert "'zpool create <pool> draid:#d:#c:#s:#w <vdevs>'"
+log_assert "'zpool create <pool> draid:#d:#c:#w:#s <vdevs>'"
 
 log_onexit cleanup
 
@@ -63,8 +63,9 @@ for (( i=0; i<10; i++ )); do
 	(( min_children = (data + parity + spares) ))
 	children=$(random_int_between $min_children 32)
 	(( width = (children * n) ))
+	(( spares *= n ))
 
-	draid="draid${parity}:${data}d:${children}c:${spares}s:${width}w"
+	draid="draid${parity}:${data}d:${children}c:${width}w:${spares}s"
 
 	draid_vdevs=$(echo $TESTDIR/file.{01..$width})
 	log_must truncate -s $MINVDEVSIZE $draid_vdevs
@@ -92,4 +93,4 @@ log_mustnot zpool create $TESTPOOL draid2:14d:31w $draid_vdevs
 # Width matches vdevs, but it must be multiple of children
 log_mustnot zpool create $TESTPOOL draid2:13d:15c:32w $draid_vdevs
 
-log_pass "'zpool create <pool> draid:#d:#c:#s:#w <vdevs>'"
+log_pass "'zpool create <pool> draid:#d:#c:#w:#s <vdevs>'"

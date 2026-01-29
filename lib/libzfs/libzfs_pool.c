@@ -1453,14 +1453,15 @@ static char *
 zpool_draid_name(char *name, int len, uint64_t data, uint64_t parity,
     uint64_t spares, uint64_t children, uint64_t width)
 {
-	int off;
-
-	off = snprintf(name, len, "%s%llu:%llud:%lluc:%llus",
-	    VDEV_TYPE_DRAID, (u_longlong_t)parity, (u_longlong_t)data,
-	    (u_longlong_t)children, (u_longlong_t)spares);
-
-	if (children < width && off < len)
-		snprintf(name + off, len - off, ":%lluw", (u_longlong_t)width);
+	if (children < width)
+		snprintf(name, len, "%s%llu:%llud:%lluc:%lluw:%llus",
+		    VDEV_TYPE_DRAID, (u_longlong_t)parity, (u_longlong_t)data,
+		    (u_longlong_t)children, (u_longlong_t)width,
+		    (u_longlong_t)spares);
+	else
+		snprintf(name, len, "%s%llu:%llud:%lluc:%llus",
+		    VDEV_TYPE_DRAID, (u_longlong_t)parity, (u_longlong_t)data,
+		    (u_longlong_t)children, (u_longlong_t)spares);
 
 	return (name);
 }

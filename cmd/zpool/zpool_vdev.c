@@ -1333,14 +1333,16 @@ is_grouping(const char *type, int *mindev, int *maxdev)
  *
  * Valid inputs:
  * - data:     number of data devices per group (1-255)
- * - parity:   number of parity blocks per group (1-3)
- * - spares:   number of distributed spares per slice (0-100)
- * - width:    total number of devices (1-255 for now)
+ * - parity:   number of parity devices per group (1-3)
+ * - children: total number of devices in slice (1-255)
+ * - width:    total number of devices, multiple of children (1-255 for now)
+ * - spares:   number of distributed spare devices (0-100), must be
+ *             multiple of failure groups (width / children)
  *
  * Examples:
  * - zpool create tank draid <devices...>
  * - zpool create tank draid2:8d:51c:2s <devices...>
- * - zpool create tank draid2:8d:51c:2s:102w <devices...>
+ * - zpool create tank draid2:8d:12c:96w:8s <devices...>
  */
 static int
 draid_config_by_type(nvlist_t *nv, const char *type, uint64_t width)
@@ -1418,6 +1420,17 @@ draid_config_by_type(nvlist_t *nv, const char *type, uint64_t width)
 		}
 	}
 
+	int fgrps = width / children;
+
+	if ((nspares % fgrps) != 0) {
+		fprintf(stderr, gettext("invalid number of spares %llu, "
+		    "must be multiple of failure groups %d\n"),
+		    (u_longlong_t)nspares, fgrps);
+		return (EINVAL);
+	}
+
+	nspares /= fgrps;
+
 	/*
 	 * When a specific number of data disks is not provided limit a
 	 * redundancy group to 8 data disks.  This value was selected to
@@ -1427,8 +1440,8 @@ draid_config_by_type(nvlist_t *nv, const char *type, uint64_t width)
 		if (children > nspares + nparity) {
 			ndata = MIN(children - nspares - nparity, 8);
 		} else {
-			fprintf(stderr, gettext("request number of "
-			    "distributed spares %llu and parity level %llu\n"
+			fprintf(stderr, gettext("requested number of "
+			    "distributed spares %llu and parity level %llu "
 			    "leaves no disks available for data\n"),
 			    (u_longlong_t)nspares, (u_longlong_t)nparity);
 			return (EINVAL);
@@ -1463,7 +1476,7 @@ draid_config_by_type(nvlist_t *nv, const char *type, uint64_t width)
 		    (u_longlong_t)(ndata + nparity + nspares));
 	}
 
-	if (children > VDEV_DRAID_MAX_CHILDREN) {
+	if (width > VDEV_DRAID_MAX_CHILDREN) {
 		fprintf(stderr, gettext("%llu disks were provided, but "
 		    "dRAID only supports up to %u disks"),
 		    (u_longlong_t)children, VDEV_DRAID_MAX_CHILDREN);
@@ -1480,7 +1493,7 @@ draid_config_by_type(nvlist_t *nv, const char *type, uint64_t width)
 	/* Store the basic dRAID configuration. */
 	fnvlist_add_uint64(nv, ZPOOL_CONFIG_NPARITY, nparity);
 	fnvlist_add_uint64(nv, ZPOOL_CONFIG_DRAID_NDATA, ndata);
-	fnvlist_add_uint64(nv, ZPOOL_CONFIG_DRAID_NSPARES, nspares);
+	fnvlist_add_uint64(nv, ZPOOL_CONFIG_DRAID_NSPARES, nspares * fgrps);
 	fnvlist_add_uint64(nv, ZPOOL_CONFIG_DRAID_NGROUPS, ngroups);
 	fnvlist_add_uint64(nv, ZPOOL_CONFIG_DRAID_NSLICE, children);
 

@@ -69,15 +69,16 @@ for replace_mode in "healing" "sequential"; do
 	(( min_children = (data + parity + spares) ))
 	children=$(random_int_between $min_children 16)
 	n=$(random_int_between 1 4)
-	width=$((children * n))
+	(( width = children * n ))
+	(( spares *= n ))
 
-	draid="draid${parity}:${data}d:${children}c:${spares}s:${width}w"
+	draid="draid${parity}:${data}d:${children}c:${width}w:${spares}s"
 
 	setup_test_env $TESTPOOL $draid $width
 
-	off=$(random_int_between 0 $((children - spares)))
+	off=$(random_int_between 0 $((children - spares/n)))
 
-	for (( i=0; i < $((spares * n)); i+=$n )); do
+	for (( i=0; i < $spares; i+=$n )); do
 
 		for (( j=$i; j < $((i+n)); j++ )); do
 			fault_vdev="$BASEDIR/vdev$((j / n + (j % n) * children + off))"

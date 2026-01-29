@@ -68,7 +68,7 @@ typedef struct vdev_draid_config {
 	 */
 	uint64_t vdc_ndata;		/* # of data devices in group */
 	uint64_t vdc_nparity;		/* # of parity devices in group */
-	uint64_t vdc_nspares;		/* # of distributed spares */
+	uint64_t vdc_nspares;		/* # of distributed spares in slice */
 	uint64_t vdc_children;		/* # of children */
 	uint64_t vdc_ngroups;		/* # groups per slice */
 	uint64_t vdc_width;		/* # multiple of children */

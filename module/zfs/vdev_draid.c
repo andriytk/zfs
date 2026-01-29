@@ -2334,9 +2334,12 @@ vdev_draid_config_generate(vdev_t *vd, nvlist_t *nv)
 	ASSERT3P(vd->vdev_ops, ==, &vdev_draid_ops);
 	vdev_draid_config_t *vdc = vd->vdev_tsd;
 
+	int fgrps = vdc->vdc_width / vdc->vdc_children;
+
 	fnvlist_add_uint64(nv, ZPOOL_CONFIG_NPARITY, vdc->vdc_nparity);
 	fnvlist_add_uint64(nv, ZPOOL_CONFIG_DRAID_NDATA, vdc->vdc_ndata);
-	fnvlist_add_uint64(nv, ZPOOL_CONFIG_DRAID_NSPARES, vdc->vdc_nspares);
+	fnvlist_add_uint64(nv, ZPOOL_CONFIG_DRAID_NSPARES,
+	    vdc->vdc_nspares * fgrps);
 	fnvlist_add_uint64(nv, ZPOOL_CONFIG_DRAID_NGROUPS, vdc->vdc_ngroups);
 	fnvlist_add_uint64(nv, ZPOOL_CONFIG_DRAID_NSLICE, vdc->vdc_children);
 }
@@ -2377,14 +2380,11 @@ vdev_draid_init(spa_t *spa, nvlist_t *nv, void **tsd)
 		return (SET_ERROR(EINVAL));
 
 	if (nvlist_lookup_uint64(nv, ZPOOL_CONFIG_DRAID_NSPARES, &nspares) ||
-	    nspares > 100 || nspares > (children - (ndata + nparity))) {
+	    nspares > 100) {
 		return (SET_ERROR(EINVAL));
 	}
 
-	if (nvlist_lookup_uint64(nv, ZPOOL_CONFIG_DRAID_NGROUPS, &ngroups) ||
-	    ngroups == 0 || ngroups > VDEV_DRAID_MAX_CHILDREN) {
-		return (SET_ERROR(EINVAL));
-	}
+	nspares /= (width / children);
 
 	/*
 	 * Validate the minimum number of children exist per group for the
@@ -2392,6 +2392,11 @@ vdev_draid_init(spa_t *spa, nvlist_t *nv, void **tsd)
 	 */
 	if (children < (ndata + nparity + nspares))
 		return (SET_ERROR(EINVAL));
+
+	if (nvlist_lookup_uint64(nv, ZPOOL_CONFIG_DRAID_NGROUPS, &ngroups) ||
+	    ngroups == 0 || ngroups > VDEV_DRAID_MAX_CHILDREN) {
+		return (SET_ERROR(EINVAL));
+	}
 
 	/*
 	 * Create the dRAID configuration using the pool nvlist configuration
