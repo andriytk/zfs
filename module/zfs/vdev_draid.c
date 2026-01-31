@@ -662,11 +662,11 @@ vdev_draid_get_perm(vdev_draid_config_t *vdc, uint64_t pindex,
 	uint64_t n = vdc->vdc_width / vdc->vdc_children;
 	uint64_t ncols = vdc->vdc_children;
 	uint64_t nperms = vdc->vdc_nperms / n * n;
-	uint64_t poff = pindex % (nperms * ncols * n);
+	uint64_t poff = pindex % (nperms * ncols);
 
 	ASSERT3P(nperms, >=, ncols * n);
 
-	*base = vdc->vdc_perms + (poff / ncols / n) * ncols * n;
+	*base = vdc->vdc_perms + (poff / (ncols * n)) * (ncols * n);
 	*iter = (poff % ncols) + (pindex % n) * ncols;
 }
 
