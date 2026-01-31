@@ -1058,7 +1058,7 @@ vdev_draid_logical_to_physical(vdev_t *vd, uint64_t logical_offset,
 	 */
 	*perm = group / ngroups;
 	uint64_t n = vdc->vdc_width / vdc->vdc_children;
-	uint64_t row = (*perm / n * ((groupwidth * ngroups) / ndisks)) +
+	uint64_t row = ((*perm / n) * ((groupwidth * ngroups) / ndisks)) +
 	    (((group % ngroups) * groupwidth) / ndisks);
 
 	return (((rowheight_sectors * row) +
@@ -1279,7 +1279,8 @@ vdev_draid_min_asize(vdev_t *vd)
 
 	ASSERT3P(vd->vdev_ops, ==, &vdev_draid_ops);
 
-	uint64_t ndisks = vdc->vdc_ndisks * vdc->vdc_width / vdc->vdc_children;
+	uint64_t ndisks = vdc->vdc_ndisks *
+	    (vdc->vdc_width / vdc->vdc_children);
 
 	return (VDEV_DRAID_REFLOW_RESERVE +
 	    (vd->vdev_min_asize + ndisks - 1) / ndisks);
@@ -1702,10 +1703,11 @@ vdev_draid_open(vdev_t *vd, uint64_t *asize, uint64_t *max_asize,
 	child_max_asize = ((child_max_asize - VDEV_DRAID_REFLOW_RESERVE) /
 	    VDEV_DRAID_ROWHEIGHT) * VDEV_DRAID_ROWHEIGHT;
 
-	uint64_t ndisks = vdc->vdc_ndisks * vdc->vdc_width / vdc->vdc_children;
+	uint64_t ndisks = vdc->vdc_ndisks *
+	    (vdc->vdc_width / vdc->vdc_children);
 	uint64_t groupsz = vdc->vdc_groupsz;
-	*asize = child_asize * ndisks / groupsz * groupsz;
-	*max_asize = child_max_asize * ndisks / groupsz * groupsz;
+	*asize = ((child_asize * ndisks) / groupsz) * groupsz;
+	*max_asize = ((child_max_asize * ndisks) / groupsz) * groupsz;
 
 	return (0);
 }
@@ -1805,7 +1807,7 @@ vdev_draid_spare_create(nvlist_t *nvroot, vdev_t *vd, uint64_t *ndraidp,
 		if (cvd->vdev_ops == &vdev_draid_ops) {
 			vdev_draid_config_t *vdc = cvd->vdev_tsd;
 			draid_nspares += vdc->vdc_nspares *
-			    vdc->vdc_width / vdc->vdc_children;
+			    (vdc->vdc_width / vdc->vdc_children);
 			ndraid++;
 		}
 	}
@@ -1839,7 +1841,7 @@ vdev_draid_spare_create(nvlist_t *nvroot, vdev_t *vd, uint64_t *ndraidp,
 
 		vdev_draid_config_t *vdc = cvd->vdev_tsd;
 		uint64_t nspares = vdc->vdc_nspares *
-		    vdc->vdc_width / vdc->vdc_children;
+		    (vdc->vdc_width / vdc->vdc_children);
 		uint64_t nparity = vdc->vdc_nparity;
 
 		for (uint64_t spare_id = 0; spare_id < nspares; spare_id++) {
@@ -2221,7 +2223,7 @@ vdev_draid_state_change(vdev_t *vd, int faulted, int degraded)
 	vdev_draid_config_t *vdc = vd->vdev_tsd;
 	ASSERT(vd->vdev_ops == &vdev_draid_ops);
 
-	if (faulted > vdc->vdc_nparity * vdc->vdc_width / vdc->vdc_children)
+	if (faulted > vdc->vdc_nparity * (vdc->vdc_width / vdc->vdc_children))
 		vdev_set_state(vd, B_FALSE, VDEV_STATE_CANT_OPEN,
 		    VDEV_AUX_NO_REPLICAS);
 	else if (degraded + faulted != 0)
@@ -2464,7 +2466,7 @@ vdev_draid_nparity(vdev_t *vd)
 {
 	vdev_draid_config_t *vdc = vd->vdev_tsd;
 
-	return (vdc->vdc_nparity * vdc->vdc_width / vdc->vdc_children);
+	return (vdc->vdc_nparity * (vdc->vdc_width / vdc->vdc_children));
 }
 
 static uint64_t
@@ -2472,7 +2474,7 @@ vdev_draid_ndisks(vdev_t *vd)
 {
 	vdev_draid_config_t *vdc = vd->vdev_tsd;
 
-	return (vdc->vdc_ndisks * vdc->vdc_width / vdc->vdc_children);
+	return (vdc->vdc_ndisks * (vdc->vdc_width / vdc->vdc_children));
 }
 
 vdev_ops_t vdev_draid_ops = {
@@ -2583,7 +2585,7 @@ vdev_draid_spare_get_child(vdev_t *vd, uint64_t physical_offset)
 
 	uint8_t *base;
 	uint64_t iter;
-	uint64_t perm = physical_offset / vdc->vdc_devslicesz * n;
+	uint64_t perm = (physical_offset / vdc->vdc_devslicesz) * n;
 
 	/*
 	 * Adjust iter by vds_spare_id so that it points to the correct slice
@@ -2645,7 +2647,7 @@ vdev_draid_spare_open(vdev_t *vd, uint64_t *psize, uint64_t *max_psize,
 		return (SET_ERROR(EINVAL));
 
 	if (vds->vds_spare_id >=
-	    vdc->vdc_nspares * vdc->vdc_width / vdc->vdc_children)
+	    vdc->vdc_nspares * (vdc->vdc_width / vdc->vdc_children))
 		return (SET_ERROR(EINVAL));
 
 	/*
