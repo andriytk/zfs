@@ -7645,8 +7645,8 @@ spa_vdev_add(spa_t *spa, nvlist_t *nvroot, boolean_t check_ashift)
 		dsl_sync_task_nowait(spa->spa_dsl_pool, spa_draid_feature_incr,
 		    (void *)(uintptr_t)ndraid, tx);
 
-		if (spa_feature_is_enabled(spa, SPA_FEATURE_DRAID_FAIL_DOMAINS)
-		    && draid_nfgroup > 0)
+		if (spa_feature_is_enabled(spa,
+		    SPA_FEATURE_DRAID_FAIL_DOMAINS) && draid_nfgroup > 0)
 			dsl_sync_task_nowait(spa->spa_dsl_pool,
 			    spa_draid_fdomains_feature_incr,
 			    (void *)(uintptr_t)draid_nfgroup, tx);
