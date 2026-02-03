@@ -104,7 +104,8 @@ extern nvlist_t *vdev_draid_read_config_spare(vdev_t *);
 /* Functions for dRAID distributed spares. */
 extern vdev_t *vdev_draid_spare_get_child(vdev_t *, uint64_t);
 extern vdev_t *vdev_draid_spare_get_parent(vdev_t *);
-extern int vdev_draid_spare_create(nvlist_t *, vdev_t *, uint64_t *, uint64_t);
+extern int vdev_draid_spare_create(nvlist_t *, vdev_t *, uint64_t *, uint64_t *,
+    uint64_t);
 
 #ifdef  __cplusplus
 }

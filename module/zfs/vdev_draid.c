@@ -1795,10 +1795,11 @@ vdev_draid_metaslab_init(vdev_t *vd, uint64_t *ms_start, uint64_t *ms_size)
  */
 int
 vdev_draid_spare_create(nvlist_t *nvroot, vdev_t *vd, uint64_t *ndraidp,
-    uint64_t next_vdev_id)
+    uint64_t *nfgroupp, uint64_t next_vdev_id)
 {
 	uint64_t draid_nspares = 0;
 	uint64_t ndraid = 0;
+	uint64_t nfgroup = 0;
 	int error;
 
 	for (uint64_t i = 0; i < vd->vdev_children; i++) {
@@ -1809,11 +1810,14 @@ vdev_draid_spare_create(nvlist_t *nvroot, vdev_t *vd, uint64_t *ndraidp,
 			draid_nspares += vdc->vdc_nspares *
 			    (vdc->vdc_width / vdc->vdc_children);
 			ndraid++;
+			if (vdc->vdc_width > vdc->vdc_children)
+				nfgroup++;
 		}
 	}
 
 	if (draid_nspares == 0) {
 		*ndraidp = ndraid;
+		*nfgroupp = nfgroup++;
 		return (0);
 	}
 
@@ -1882,6 +1886,7 @@ vdev_draid_spare_create(nvlist_t *nvroot, vdev_t *vd, uint64_t *ndraidp,
 
 	kmem_free(new_spares, sizeof (*new_spares) * n);
 	*ndraidp = ndraid;
+	*nfgroupp = nfgroup;
 
 	return (0);
 }
