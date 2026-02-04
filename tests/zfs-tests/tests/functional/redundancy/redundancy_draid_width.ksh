@@ -29,7 +29,7 @@
 #
 # Copyright (c) 2013 by Delphix. All rights reserved.
 # Copyright (c) 2020 by Lawrence Livermore National Security, LLC.
-# Copyright (c) 2020 by 2026, Seagate Technology, LLC.
+# Copyright (c) 2026 by Seagate Technology, LLC.
 #
 
 . $STF_SUITE/include/libtest.shlib
